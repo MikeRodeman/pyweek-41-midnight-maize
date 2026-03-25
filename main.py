@@ -1,14 +1,20 @@
 import pygame
 import sys
 from constants import *
+from maze import Maze
+from sidebar import Sidebar
 
 class Game:
     def __init__(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((LOGICAL_SCREEN_WIDTH, LOGICAL_SCREEN_HEIGHT),
-                                                pygame.SCALED | pygame.RESIZABLE)
+        self.screen = pygame.display.set_mode(
+            (LOGICAL_SCREEN_WIDTH, LOGICAL_SCREEN_HEIGHT),
+            pygame.SCALED | pygame.RESIZABLE)
         pygame.display.set_caption("Midnight Maize")
         self.clock = pygame.time.Clock()
+
+        self.maze = Maze()
+        self.sidebar = Sidebar()
 
         self.running = True
     
@@ -20,7 +26,8 @@ class Game:
     def draw_screen(self):
         self.screen.fill(BLACK)
 
-        pygame.draw.rect(self.screen, SIDEBAR_COLOR, (MAZE_WIDTH, 0, SIDEBAR_WIDTH, LOGICAL_SCREEN_HEIGHT))
+        self.maze.draw(self.screen)
+        self.sidebar.draw(self.screen)
 
         pygame.display.flip()
 
