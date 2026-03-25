@@ -13,10 +13,13 @@ class Game:
         pygame.display.set_caption("Midnight Maize")
         self.clock = pygame.time.Clock()
 
-        self.maze = Maze()
-        self.sidebar = Sidebar()
+        self.new_game("PyWeek41")
 
         self.running = True
+    
+    def new_game(self, specific_seed=None):
+        self.maze = Maze(specific_seed)
+        self.sidebar = Sidebar()
     
     def handle_events(self):
         for event in pygame.event.get():
