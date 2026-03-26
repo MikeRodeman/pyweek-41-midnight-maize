@@ -21,13 +21,15 @@ class Maze:
         self.rng = random.Random(self.seed_value)
 
         # The bit values for the directions, with their dx and dy:
-        self.directions = [(N, 0, -1), (E, 1, 0), (S, 0, 1), (W, -1, 0)]
+        self.directions = [(N, 0, -1), (S, 0, 1), (W, -1, 0), (E, 1, 0)]
 
         # When we knock a wall down in a cell to carve a path to another cell,
         # we also need to knock the wall down in that other cell:
-        self.opposite = {N: S, S: N, E: W, W: E}
+        self.opposite = {N: S, S: N, W: E, E: W}
 
         self.generate()
+        self.find_starting_positions()
+        self.create_wall_rects()
     
     def generate(self):
         # Pick random starting point for the generation:
@@ -159,6 +161,32 @@ class Maze:
         
         # Randomly pick one of the possible cells for the scarecrow's starting position:
         self.scarecrow_starting_position = self.rng.choice(possible_scarecrow_starting_positions)
+    
+    def create_wall_rects(self):
+        self.wall_rects = []
+        thickness = 4
+
+        # Make 4 large rects for the borders:
+        self.wall_rects.append(pygame.Rect(0, 0, MAZE_WIDTH, thickness // 2)) # North
+        self.wall_rects.append(pygame.Rect(0, MAZE_HEIGHT - thickness // 2, MAZE_WIDTH, thickness // 2)) # South
+        self.wall_rects.append(pygame.Rect(0, 0, thickness // 2, MAZE_HEIGHT)) # West
+        self.wall_rects.append(pygame.Rect(MAZE_WIDTH - thickness // 2, 0, thickness // 2, MAZE_HEIGHT)) # East
+
+        for y in range(GRID_SIZE):
+            for x in range(GRID_SIZE):
+                # Get the wall bitmask for the current cell:
+                walls_bitmask = self.grid[y][x]
+
+                # Coordinates of the cell corners:
+                left_x = x * TILE_SIZE
+                top_y = y * TILE_SIZE
+
+                # We only need to check the South and East walls for each cell, because the
+                # North and West walls will be the South and West walls for a neighboring cell:
+                if walls_bitmask & S:
+                    self.wall_rects.append(pygame.Rect(left_x, top_y + TILE_SIZE - thickness // 2, TILE_SIZE, thickness))
+                if walls_bitmask & E:
+                    self.wall_rects.append(pygame.Rect(left_x + TILE_SIZE - thickness // 2, top_y, thickness, TILE_SIZE))
 
     def draw(self, surface):
         for y in range(GRID_SIZE):
@@ -172,14 +200,20 @@ class Maze:
                 right_x = left_x + TILE_SIZE
                 bottom_y = top_y + TILE_SIZE
 
-                if walls_bitmask & N:
+                # We only need to check the South and East walls for each cell, because the
+                # North and West walls will be the South and West walls for a neighboring cell:
+                if walls_bitmask & S or y == GRID_SIZE - 1:
+
+                    # Correct for 0-indexing mismatch on the last pixel.
+                    # A window N pixels wide has indices 0 to N - 1, not N:
+                    draw_y = min(bottom_y, MAZE_HEIGHT - 1)
+                    pygame.draw.line(surface, WHITE, (left_x, draw_y), (right_x, draw_y))
+                if walls_bitmask & E or x == GRID_SIZE - 1:
+                    draw_x = min(right_x, MAZE_WIDTH - 1)
+                    pygame.draw.line(surface, WHITE, (draw_x, top_y), (draw_x, bottom_y))
+
+                # Draw the North and West borders:
+                if y == 0: # North
                     pygame.draw.line(surface, WHITE, (left_x, top_y), (right_x, top_y))
-
-                if walls_bitmask & E:
-                    pygame.draw.line(surface, WHITE, (right_x, top_y), (right_x, bottom_y))
-
-                if walls_bitmask & S:
-                    pygame.draw.line(surface, WHITE, (left_x, bottom_y), (right_x, bottom_y))
-
-                if walls_bitmask & W:
+                if x == 0: # West
                     pygame.draw.line(surface, WHITE, (left_x, top_y), (left_x, bottom_y))

@@ -20,6 +20,6 @@ SIDEBAR_COLOR = (30, 30, 30)
 
 # Bitmask constants for walls. Similar to Linux file permissions.
 N = 1  # 0001 (North/Top)
-E = 2  # 0010 (East/Right)
-S = 4  # 0100 (South/Bottom)
-W = 8  # 1000 (West/Left)
+S = 2  # 0010 (South/Bottom)
+W = 4  # 0100 (West/Left)
+E = 8  # 1000 (East/Right)

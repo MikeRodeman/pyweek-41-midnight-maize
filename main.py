@@ -20,11 +20,9 @@ class Game:
 
         self.running = True
     
-    def new_game(self, specific_seed=None):
-        self.maze = Maze(specific_seed)
+    def new_game(self, seed=None):
+        self.maze = Maze(seed)
         self.sidebar = Sidebar()
-
-        self.maze.find_starting_positions()
 
         self.player = Player(self.maze.player_starting_position)
         self.lookout_tower = LookoutTower(self.maze.lookout_tower_position)
