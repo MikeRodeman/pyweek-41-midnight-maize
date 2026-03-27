@@ -160,20 +160,36 @@ class Maze:
                 possible_scarecrow_starting_positions.append(cell)
         
         # Randomly pick one of the possible cells for the scarecrow's starting position:
-        self.scarecrow_starting_position = self.rng.choice(possible_scarecrow_starting_positions)
+        # (The conditional is a future-proof for custom tiny grid sizes where mid-range
+        # positions might not exist.)
+        if possible_scarecrow_starting_positions:
+            self.scarecrow_starting_position = self.rng.choice(possible_scarecrow_starting_positions)
+        else:
+            self.scarecrow_starting_position = furthest_cell_from_player
     
     def create_wall_rects(self):
-        self.wall_rects = []
+        # Make dictionary to track the wall rects each grid cell has:
+        self.wall_rects = collections.defaultdict(list)
         thickness = 4
 
         # Make 4 large rects for the borders:
-        self.wall_rects.append(pygame.Rect(0, 0, MAZE_WIDTH, thickness // 2)) # North
-        self.wall_rects.append(pygame.Rect(0, MAZE_HEIGHT - thickness // 2, MAZE_WIDTH, thickness // 2)) # South
-        self.wall_rects.append(pygame.Rect(0, 0, thickness // 2, MAZE_HEIGHT)) # West
-        self.wall_rects.append(pygame.Rect(MAZE_WIDTH - thickness // 2, 0, thickness // 2, MAZE_HEIGHT)) # East
+        north_border = pygame.Rect(0, 0, MAZE_WIDTH, thickness // 2)
+        south_border = pygame.Rect(0, MAZE_HEIGHT - thickness // 2, MAZE_WIDTH, thickness // 2)
+        west_border = pygame.Rect(0, 0, thickness // 2, MAZE_HEIGHT)
+        east_border = pygame.Rect(MAZE_WIDTH - thickness // 2, 0, thickness // 2, MAZE_HEIGHT)
 
         for y in range(GRID_SIZE):
             for x in range(GRID_SIZE):
+                if y == 0:
+                    self.wall_rects[(x, y)].append(north_border)
+                elif y == GRID_SIZE - 1:
+                    self.wall_rects[(x, y)].append(south_border)
+                
+                if x == 0:
+                    self.wall_rects[(x, y)].append(west_border)
+                elif x == GRID_SIZE - 1:
+                    self.wall_rects[(x, y)].append(east_border)
+
                 # Get the wall bitmask for the current cell:
                 walls_bitmask = self.grid[y][x]
 
@@ -184,9 +200,9 @@ class Maze:
                 # We only need to check the South and East walls for each cell, because the
                 # North and West walls will be the South and West walls for a neighboring cell:
                 if walls_bitmask & S:
-                    self.wall_rects.append(pygame.Rect(left_x, top_y + TILE_SIZE - thickness // 2, TILE_SIZE, thickness))
+                    self.wall_rects[(x, y)].append(pygame.Rect(left_x, top_y + TILE_SIZE - thickness // 2, TILE_SIZE, thickness))
                 if walls_bitmask & E:
-                    self.wall_rects.append(pygame.Rect(left_x + TILE_SIZE - thickness // 2, top_y, thickness, TILE_SIZE))
+                    self.wall_rects[(x, y)].append(pygame.Rect(left_x + TILE_SIZE - thickness // 2, top_y, thickness, TILE_SIZE))
 
     def draw(self, surface):
         for y in range(GRID_SIZE):
