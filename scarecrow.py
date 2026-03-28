@@ -1,6 +1,7 @@
 import pygame
 import random
 from constants import *
+from astar import *
 from enum import Enum
 
 class ScarecrowState(Enum):
@@ -44,6 +45,9 @@ class Scarecrow(pygame.sprite.Sprite):
         # Memory so scarecrow doesn't backtrack randomly:
         self.opposite_directions = {N: S, S: N, W: E, E: W}
         self.last_direction_moved = None
+
+        self.target_glow_stick_position = None
+        self.target_player_position = None
     
     def update(self, maze):
         # The legs - physically move:
@@ -89,18 +93,29 @@ class Scarecrow(pygame.sprite.Sprite):
     
     def calculate_path(self, maze):
         """The Brain: Calculate path to follow based on current state."""
-        if self.state == ScarecrowState.DORMANT:
-            # Do nothing:
-            return
+
+        # Active chase, player in sight:
+        if self.state == ScarecrowState.CHASE and self.target_player_position:
+            self.speed = SCARECROW_CHASE_SPEED
+            self.path = calculate_astar(maze.grid, self.current_grid_cell, self.target_player_position)
+        
+        # Investigate new glow stick:
+        elif self.state == ScarecrowState.INVESTIGATE and self.target_glow_stick_position:
+            self.speed = SCARECROW_RUN_SPEED
+            self.path = calculate_astar(maze.grid, self.current_grid_cell, self.target_glow_stick_position)
+
+            # Go back to wandering after finding glow stick:
+            if self.current_grid_cell == self.target_glow_stick_position:
+                self.state = ScarecrowState.WANDER
+                self.target_glow_stick_position = None # Clear memory
+        
+        # Wandering:
         elif self.state == ScarecrowState.WANDER:
-            # Wander calculates just one cell ahead at a time:
+            self.speed = SCARECROW_SPEED
+            
             next_cell = self.calculate_wander_move(maze)
             if next_cell:
                 self.path.append(next_cell)
-        elif self.state == ScarecrowState.INVESTIGATE:
-            pass
-        elif self.state == ScarecrowState.CHASE:
-            pass
 
     def calculate_wander_move(self, maze):
         current_grid_x, current_grid_y = self.current_grid_cell
@@ -126,10 +141,10 @@ class Scarecrow(pygame.sprite.Sprite):
             return (next_x, next_y)
         
         return None
-    
-    def investigate_glow_stick(self, grid_position):
-        self.state = ScarecrowState.INVESTIGATE
-        self.path.clear() # Abandon whatever it was doing
 
-        # Implement later:
-        # self.path = calculate_astar(self.current_grid_cell, grid_position)
+    def investigate_glow_stick(self, grid_position):
+        """Called by main.py when a glow stick is dropped."""
+        
+        self.state = ScarecrowState.INVESTIGATE
+        self.target_glow_stick_position = grid_position
+        self.path.clear() # Stop whatever we're doing to go investigate.

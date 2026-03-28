@@ -71,7 +71,7 @@ class Game:
                     self.glow_stick_sprites.add(glow_stick)
                     self.glow_sticks_dropped += 1
 
-                    # self.scarecrow.investigate_glow_stick(glow_stick.grid_position)
+                    self.scarecrow.investigate_glow_stick(glow_stick.grid_position)
     
     def draw_screen(self):
         self.screen.blit(self.background_surface, (0, 0))
