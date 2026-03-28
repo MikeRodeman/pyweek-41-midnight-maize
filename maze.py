@@ -4,7 +4,7 @@ import collections
 from constants import *
 
 class Maze:
-    def __init__(self, seed_value=None):
+    def __init__(self, seed=None):
         # The maze is described with a 2D list of integers between 0 and 15.
         # The integers represent the walls of each cell in the grid, like
         # how Linux file permission numbers work. It's called a 4-bit bitmask.
@@ -13,12 +13,12 @@ class Maze:
         self.grid = [[15 for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
 
         # If no player doesn't give a seed, generate a random one:
-        if not seed_value:
-            self.seed_value = str(random.randint(1000000, 9999999))
+        if not seed:
+            self.seed = str(random.randint(1000000, 9999999))
         else:
-            self.seed_value = str(seed_value)
+            self.seed = str(seed)
 
-        self.rng = random.Random(self.seed_value)
+        self.rng = random.Random(self.seed)
 
         # The bit values for the directions, with their dx and dy:
         self.directions = [(N, 0, -1), (S, 0, 1), (W, -1, 0), (E, 1, 0)]

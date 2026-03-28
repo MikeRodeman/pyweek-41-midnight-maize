@@ -6,6 +6,8 @@ from sidebar import Sidebar
 from player import Player
 from scarecrow import *
 from lookout_tower import LookoutTower
+from menus import *
+from event_handler import EventHandler
 
 class Game:
     def __init__(self):
@@ -16,9 +18,29 @@ class Game:
         pygame.display.set_caption("Midnight Maize")
         self.clock = pygame.time.Clock()
 
-        self.new_game()
+        # Stack to keep track of the game state:
+        self.state_stack = [GameState.START_MENU]
+        
+        self.large_font = pygame.font.Font(LARGE_FONT_PATH, 32)
+        self.font = pygame.font.Font(SMALL_FONT_PATH, 16)
+        self.menus = MenuManager(self.large_font, self.font)
 
+        self.event_handler = EventHandler(self)
+
+        self.new_game()
         self.running = True
+    
+    @property
+    def state(self):
+        """Always returns the current active state (top of stack)."""
+        return self.state_stack[-1]
+
+    def change_state(self, new_state):
+        self.state_stack.append(new_state)
+
+    def go_back(self):
+        if len(self.state_stack) > 1:
+            self.state_stack.pop()
     
     def new_game(self, seed=None):
         self.maze = Maze(seed)
@@ -40,6 +62,10 @@ class Game:
         self.start_ticks = pygame.time.get_ticks() # Get start time in ms
         self.elapsed_ticks = 0
 
+        # Record when this specific game started.
+        # Used in pause screen to keep time paused:
+        self.last_frame_ticks = pygame.time.get_ticks()
+
         # Instead of drawing the maze from scratch on every frame,
         # create a Surface to put the maze on, and you can just
         # blit the surface to the screen:
@@ -50,49 +76,55 @@ class Game:
         self.maze.draw(self.background_surface)
         
     def handle_events(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    glow_stick = self.player.drop_glow_stick()
-
-                    if glow_stick:
-                        self.glow_stick_sprites.add(glow_stick)
-                        self.glow_sticks_dropped += 1
-
-                        # Grace period at beginning of game so player can 
-                        # drop glow sticks and not immediately get chased:
-                        if self.elapsed_ticks / 1000 > GRACE_PERIOD:
-                            self.scarecrow.investigate_glow_stick(glow_stick.grid_position)
-                    
-                    else:
-                        pass # Maybe play a sound or something
+        self.event_handler.process_events()
     
     def draw_screen(self):
-        self.screen.blit(self.background_surface, (0, 0))
+        # Always draw the game world in the background (except start menu):
+        if self.state != GameState.START_MENU:
+            self.screen.blit(self.background_surface, (0, 0))
+            self.character_sprites.draw(self.screen)
+            self.glow_stick_sprites.draw(self.screen)
+            self.sidebar.draw(self.screen, self.player, self.elapsed_ticks)
 
-        self.sidebar.draw(self.screen, self.player, self.elapsed_ticks)
+        # Route the drawing based on the active state:
+        if self.state == GameState.START_MENU:
+            self.menus.draw_start_menu(self.screen)
+        elif self.state == GameState.PAUSED_MENU:
+            self.menus.draw_paused_menu(self.screen)
+        elif self.state == GameState.STORY_SCREEN:
+            self.menus.draw_story_screen(self.screen)
+        elif self.state == GameState.CONTROLS_SCREEN:
+            self.menus.draw_controls_screen(self.screen)
+        elif self.state == GameState.ENTER_SEED_SCREEN:
+            self.menus.draw_enter_seed_screen(self.screen)
+        elif self.state == GameState.CURRENT_SEED_SCREEN:
+            self.menus.draw_current_seed_screen(self.screen, self.maze.seed) 
 
-        self.character_sprites.draw(self.screen)
-        self.glow_stick_sprites.draw(self.screen)
-        
         pygame.display.flip()
 
     def update(self):
-        self.elapsed_ticks = (pygame.time.get_ticks() - self.start_ticks)
+        # Calculate how much time has passed since last loop:
+        current_ticks = pygame.time.get_ticks()
+        delta_time = current_ticks - self.last_frame_ticks
 
-        self.glow_stick_sprites.update()
-        self.player.update(self.maze)
-        self.scarecrow.update(self.maze, self.player)
+        # Always update the last frame ticks, otherwise after
+        # unpausing, the time will include all the paused time:
+        self.last_frame_ticks = current_ticks
 
-        # Lose condition:
-        if self.player.hitbox_rect.colliderect(self.scarecrow.hitbox_rect):
-            self.show_results(False)
-        
-        # Win condition:
-        if self.player.hitbox_rect.colliderect(self.lookout_tower.rect):
-            self.show_results(True)
+        if self.state == GameState.PLAYING:
+            self.elapsed_ticks += delta_time
+
+            self.glow_stick_sprites.update()
+            self.player.update(self.maze)
+            self.scarecrow.update(self.maze, self.player)
+
+            # Lose condition:
+            if self.player.hitbox_rect.colliderect(self.scarecrow.hitbox_rect):
+                self.show_results(False)
+            
+            # Win condition:
+            if self.player.hitbox_rect.colliderect(self.lookout_tower.rect):
+                self.show_results(True)
     
     def show_results(self, won):
         # Calculate final stats:
