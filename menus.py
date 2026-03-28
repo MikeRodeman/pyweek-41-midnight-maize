@@ -70,7 +70,7 @@ class MenuManager:
             "SPACE : DROP GLOW STICK",
             "ESC : PAUSE / MENU",
             "",
-            "OBJECTIVE: FIND THE YELLOW TOWER",
+            "OBJECTIVE: FIND THE LOOKOUT TOWER",
             f"SCARECROW WAKES AFTER {GRACE_PERIOD}s OR {GRACE_GLOW_STICKS_AMOUNT} STICKS DROPPED",
             "",
             "[BACKSPACE] RETURN"
