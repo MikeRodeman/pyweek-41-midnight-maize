@@ -1,5 +1,6 @@
 import pygame
 import random
+from player import *
 from constants import *
 from astar import *
 from enum import Enum
@@ -48,8 +49,14 @@ class Scarecrow(pygame.sprite.Sprite):
 
         self.target_glow_stick_position = None
         self.target_player_position = None
+
+        # Memory timer for chasing around corners:
+        self.last_seen_player_time = 0
     
-    def update(self, maze):
+    def update(self, maze, player):
+        # Always check if we can see the player:
+        self.check_for_player(player, maze)
+
         # The legs - physically move:
         self.move_to_adjacent_cell_center()
 
@@ -144,7 +151,94 @@ class Scarecrow(pygame.sprite.Sprite):
 
     def investigate_glow_stick(self, grid_position):
         """Called by main.py when a glow stick is dropped."""
+
+        # Ignore glow sticks if chasing the player:
+        if self.state == ScarecrowState.CHASE:
+            return
         
         self.state = ScarecrowState.INVESTIGATE
         self.target_glow_stick_position = grid_position
         self.path.clear() # Stop whatever we're doing to go investigate.
+    
+    def check_for_player(self, player, maze):
+        # Proximity check ignoring walls:
+        player_center_vector = pygame.math.Vector2(player.rect.center)
+        scarecrow_center_vector = pygame.math.Vector2(self.rect.center)
+
+        has_proximity = scarecrow_center_vector.distance_to(player_center_vector) < SCARECROW_DETECTION_RADIUS
+        has_line_of_sight = self.has_line_of_sight(player, maze)
+
+        can_see_player = has_proximity or has_line_of_sight
+
+        # Logic for when player is seen:
+        if can_see_player:
+            # Update memory timer:
+            self.last_seen_player_time = pygame.time.get_ticks()
+
+            if self.state != ScarecrowState.CHASE:
+                self.start_chase(player.current_grid_cell)
+
+            elif self.target_player_position != player.current_grid_cell:
+                # This means we're chasing, but player has moved to a new cell.
+                # So update the target and clear the path so A* recalculates.
+                self.target_player_position = player.current_grid_cell
+                self.path.clear()
+
+        # Logic for when player is not seen, i.e., player turned a corner,
+        # OR, chase was started via proximity and not line of sight:
+        else:
+            if self.state == ScarecrowState.CHASE:
+                # How long since player was seen:
+                current_time = pygame.time.get_ticks()
+                time_since_seen = current_time - self.last_seen_player_time
+
+                # Give up if it's been too long, or if we reached the spot where the player was:
+                if (time_since_seen > SCARECROW_MEMORY_LENGTH 
+                    or self.current_grid_cell == self.target_player_position):
+                    
+                    print('lost player')
+                    self.state = ScarecrowState.WANDER
+                    self.target_player_position = None
+                    self.path.clear()
+    
+    def has_line_of_sight(self, player, maze):
+        player_grid_x, player_grid_y = player.current_grid_cell
+        scarecrow_grid_x, scarecrow_grid_y = self.current_grid_cell
+
+        # (Note: Don't have to account for if they share both column
+        # and row, because if they do then that means the scarecrow
+        # caught the player and the game is already over.)
+
+        # Check if in same column:
+        if scarecrow_grid_x == player_grid_x:
+            start, end = min(scarecrow_grid_y, player_grid_y), max(scarecrow_grid_y, player_grid_y)
+
+            for y in range(start, end):
+                # Check if there's a North/South wall blocking line of sight:
+                if (maze.grid[y][scarecrow_grid_x] & S) or (maze.grid[y + 1][scarecrow_grid_x] & N):
+                    return False
+            
+            return True
+        
+        # Check if in same row:
+        if scarecrow_grid_y == player_grid_y:
+            start, end = min(scarecrow_grid_x, player_grid_x), max(scarecrow_grid_x, player_grid_x)
+
+            for x in range(start, end):
+                # Check if there's a West/East wall blocking line of sight:
+                if (maze.grid[scarecrow_grid_y][x] & E) or (maze.grid[scarecrow_grid_y][x + 1] & W):
+                    return False
+            
+            return True
+        
+        return False
+    
+    def start_chase(self, player_grid_position):
+        self.state = ScarecrowState.CHASE
+        self.target_player_position = player_grid_position
+
+        # Instantly increase speed:
+        self.speed = SCARECROW_CHASE_SPEED
+
+        # Clear path so A* recalculates toward the player's current spot:
+        self.path.clear()

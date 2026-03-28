@@ -19,7 +19,7 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
 
         # Set grid location:
-        self.grid_location = starting_position
+        self.current_grid_cell = starting_position
 
         # Set starting position:
         self.pos_x = starting_position[0] * TILE_SIZE + TILE_SIZE // 2
@@ -66,7 +66,7 @@ class Player(pygame.sprite.Sprite):
         if keys[pygame.K_LEFT] or keys[pygame.K_a]: dx -= self.speed
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]: dx += self.speed
 
-        self.grid_location = (int(self.pos_x // TILE_SIZE), int(self.pos_y // TILE_SIZE))
+        self.current_grid_cell = (int(self.pos_x // TILE_SIZE), int(self.pos_y // TILE_SIZE))
 
         # Horizontal movement and collision:
         self.pos_x += dx
@@ -86,7 +86,7 @@ class Player(pygame.sprite.Sprite):
         # in the current cell and the 8 neighboring cells:
         wall_rects_to_check = []
 
-        grid_x, grid_y = self.grid_location
+        grid_x, grid_y = self.current_grid_cell
 
         for i in range(-1, 2):
             for j in range(-1, 2):

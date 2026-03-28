@@ -84,7 +84,10 @@ class Game:
         pygame.display.flip()
 
     def update(self):
-        self.character_sprites.update(self.maze)
+        # self.character_sprites.update(self.maze)
+        self.glow_stick_sprites.update()
+        self.player.update(self.maze)
+        self.scarecrow.update(self.maze, self.player)
 
         if self.player.hitbox_rect.colliderect(self.scarecrow.hitbox_rect):
             print("THE SCARECROW GOT YOU!")
