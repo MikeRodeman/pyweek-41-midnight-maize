@@ -212,7 +212,7 @@ class Scarecrow(pygame.sprite.Sprite):
 
             for y in range(start, end):
                 # Check if there's a North/South wall blocking line of sight:
-                if (maze.grid[y][scarecrow_grid_x] & c.S) or (maze.grid[y + 1][scarecrow_grid_x] & N):
+                if (maze.grid[y][scarecrow_grid_x] & c.S) or (maze.grid[y + 1][scarecrow_grid_x] & c.N):
                     return False
             
             return True
