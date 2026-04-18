@@ -3,7 +3,12 @@ import pygame
 import src.core.constants as c
 
 class MenuManager:
-    def __init__(self, large_font, small_font):
+    def __init__(
+        self,
+        large_font: pygame.font.Font,
+        small_font: pygame.font.Font
+        ) -> None:
+        
         self.large_font = large_font
         self.small_font = small_font
         
@@ -16,12 +21,20 @@ class MenuManager:
         self.current_story_page = 0
         self.story_pages = c.STORY_PAGES
 
-    def draw_text_centered(self, screen, text, font, y_position, color=c.WHITE):
+    def draw_text_centered(
+        self,
+        screen: pygame.Surface,
+        text: str,
+        font: pygame.font.Font,
+        y_position: int,
+        color: pygame.typing.ColorLike = c.WHITE
+        ) -> None:
+        
         surface = font.render(text, False, color)
         x_position = (c.LOGICAL_SCREEN_WIDTH // 2) - (surface.get_width() // 2)
         screen.blit(surface, (x_position, y_position))
 
-    def draw_start_menu(self, screen):
+    def draw_start_menu(self, screen: pygame.Surface) -> None:
         screen.fill(c.BLACK)
         self.draw_text_centered(screen, "MIDNIGHT MAIZE", self.large_font, 50, (255, 50, 50))
         
@@ -35,7 +48,7 @@ class MenuManager:
         for i, option in enumerate(options):
             self.draw_text_centered(screen, option, self.small_font, 120 + (i * 30))
 
-    def draw_paused_menu(self, screen):
+    def draw_paused_menu(self, screen: pygame.Surface) -> None:
         screen.blit(self.overlay, (0, 0))
         self.draw_text_centered(screen, "PAUSED", self.large_font, 60)
         
@@ -49,7 +62,7 @@ class MenuManager:
         for i, option in enumerate(options):
             self.draw_text_centered(screen, option, self.small_font, 130 + (i * 25))
 
-    def draw_story_screen(self, screen):
+    def draw_story_screen(self, screen: pygame.Surface) -> None:
         self.draw_overlay(screen)
         self.draw_text_centered(screen, "THE TALE", self.large_font, 50)
         
@@ -61,7 +74,7 @@ class MenuManager:
         self.draw_text_centered(screen, footer, self.small_font, 180, (150, 150, 150))
         self.draw_text_centered(screen, "[SPACE] NEXT   [BACKSPACE] BACK", self.small_font, 220)
 
-    def draw_controls_screen(self, screen):
+    def draw_controls_screen(self, screen: pygame.Surface) -> None:
         self.draw_overlay(screen)
         self.draw_text_centered(screen, "HOW TO SURVIVE", self.large_font, 40)
         
@@ -79,7 +92,7 @@ class MenuManager:
         for i, line in enumerate(controls):
             self.draw_text_centered(screen, line, self.small_font, 90 + (i * 20))
 
-    def draw_enter_seed_screen(self, screen):
+    def draw_enter_seed_screen(self, screen: pygame.Surface) -> None:
         self.draw_overlay(screen)
         self.draw_text_centered(screen, "TYPE CUSTOM SEED", self.large_font, 60)
         
@@ -93,17 +106,26 @@ class MenuManager:
         
         self.draw_text_centered(screen, "[ENTER] CONFIRM   [BACKSPACE] CANCEL", self.small_font, 180)
 
-    def draw_current_seed_screen(self, screen, current_seed):
+    def draw_current_seed_screen(self, screen: pygame.Surface, current_seed: str) -> None:
         self.draw_overlay(screen)
         self.draw_text_centered(screen, "MAP DATA", self.large_font, 70)
         self.draw_text_centered(screen, f"SEED: {current_seed}", self.small_font, 130, (255, 255, 100))
         self.draw_text_centered(screen, "SHARE THIS WITH FRIENDS", self.small_font, 160)
         self.draw_text_centered(screen, "[BACKSPACE] RETURN", self.small_font, 210)
 
-    def draw_overlay(self, screen):
+    def draw_overlay(self, screen: pygame.Surface) -> None:
         screen.blit(self.overlay, (0, 0))
     
-    def draw_results_screen(self, screen, won, time_string, glow_sticks_used, glow_sticks_left, current_seed):
+    def draw_results_screen(
+        self,
+        screen: pygame.Surface,
+        won: bool,
+        time_string: str,
+        glow_sticks_used: int,
+        glow_sticks_left: int,
+        current_seed: str
+        ) -> None:
+        
         self.draw_overlay(screen)
 
         if won:

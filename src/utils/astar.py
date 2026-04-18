@@ -1,23 +1,29 @@
 import heapq
 
 import src.core.constants as c
+from src.core.custom_types import Coordinate
 
-def calculate_astar(maze_grid, start_cell, goal_cell):
+def calculate_astar(
+    maze_grid: list[list[int]],
+    start_cell: Coordinate,
+    goal_cell: Coordinate
+    ) -> list[Coordinate]:
+    
     # Keep track of cells we've seen but haven't explored yet:
-    to_visit_list = []
+    to_visit_list: list[Coordinate] = []
 
     # Store tuples: (priority_score, (x, y))
     heapq.heappush(to_visit_list, (0, start_cell))
 
     # A dictionary to keep track of our path:
     # trail_map[current cell] = where we came from
-    trail_map = {}
+    trail_map: dict[Coordinate, Coordinate] = {}
 
     # How far we've traveled from start to current cell:
-    steps_so_far = {start_cell: 0}
+    steps_so_far: dict[Coordinate, int] = {start_cell: 0}
 
     # Priority score combining steps so far with a distance guess heuristic:
-    total_priority_score = {start_cell: get_manhattan_distance(start_cell, goal_cell)}
+    total_priority_score: dict[Coordinate, int] = {start_cell: get_manhattan_distance(start_cell, goal_cell)}
 
     while to_visit_list:
         current_cell = heapq.heappop(to_visit_list)[1]
@@ -58,10 +64,14 @@ def calculate_astar(maze_grid, start_cell, goal_cell):
     
     return [] # Means scarecrow is trapped somehow
 
-def get_manhattan_distance(cell_a, cell_b):
+def get_manhattan_distance(cell_a: Coordinate, cell_b: Coordinate) -> int:
     return abs(cell_a[0] - cell_b[0]) + abs(cell_a[1] - cell_b[1])
 
-def reconstruct_path(trail_map, current_cell):
+def reconstruct_path(
+    trail_map: dict[Coordinate, Coordinate],
+    current_cell: Coordinate
+    ) -> list[Coordinate]:
+    
     path = []
     while current_cell in trail_map:
         path.append(current_cell)

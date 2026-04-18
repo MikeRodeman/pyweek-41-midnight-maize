@@ -4,6 +4,8 @@ import random
 import pygame
 
 import src.core.constants as c
+from src.core.custom_types import Coordinate
+from src.core.maze import Maze
 from src.entities.player import Player
 from src.utils.astar import calculate_astar
 
@@ -13,7 +15,7 @@ class ScarecrowState(Enum):
     INVESTIGATE = 2
     CHASE = 3
 class Scarecrow(pygame.sprite.Sprite):
-    def __init__(self, starting_position):
+    def __init__(self, starting_grid_position: Coordinate) -> None:
         # Call parent constructor:
         super().__init__()
 
@@ -23,35 +25,35 @@ class Scarecrow(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
 
         # Set starting position:
-        self.pos_x = starting_position[0] * c.TILE_SIZE + c.TILE_SIZE // 2
-        self.pos_y = starting_position[1] * c.TILE_SIZE + c.TILE_SIZE // 2
+        self.px_pos_x = starting_grid_position[0] * c.TILE_SIZE + c.TILE_SIZE // 2
+        self.px_pos_y = starting_grid_position[1] * c.TILE_SIZE + c.TILE_SIZE // 2
 
         # Smaller rect for hitbox:
         self.hitbox_rect = pygame.Rect(0, 0, 8, 8)
-        self.hitbox_rect.center = (int(self.pos_x), int(self.pos_y))
+        self.hitbox_rect.center = (int(self.px_pos_x), int(self.px_pos_y))
         
         # Line up the center of the visual rect with the center of the hitbox rect:
         self.rect.center = self.hitbox_rect.center
 
         self.speed = c.SCARECROW_SPEED
-        self.state = ScarecrowState.WANDER
+        self.state: ScarecrowState = ScarecrowState.WANDER
 
         # Logical position and movement on the grid:
-        self.current_grid_cell = starting_position
-        self.target_grid_cell = starting_position
-        self.path = []
+        self.current_grid_cell = starting_grid_position
+        self.target_grid_cell = starting_grid_position
+        self.path: list[Coordinate] = []
 
         # Memory so scarecrow doesn't backtrack randomly:
         self.opposite_directions = {c.N: c.S, c.S: c.N, c.W: c.E, c.E: c.W}
         self.last_direction_moved = None
 
-        self.target_glow_stick_position = None
-        self.target_player_position = None
+        self.target_glow_stick_grid_position = None
+        self.target_player_grid_position = None
 
         # Memory timer for chasing around corners:
         self.last_seen_player_time = 0
     
-    def update(self, maze, player):
+    def update(self, maze: Maze, player: Player) -> None:
         # Always check if we can see the player:
         self.check_for_player(player, maze)
 
@@ -62,31 +64,31 @@ class Scarecrow(pygame.sprite.Sprite):
         if self.current_grid_cell == self.target_grid_cell:
             self.follow_path(maze)
     
-    def move_to_adjacent_cell_center(self):
+    def move_to_adjacent_cell_center(self) -> None:
         """The Legs: Move rect center from current cell to the exact center of adjacent cell."""
-        target_pixel_x = self.target_grid_cell[0] * c.TILE_SIZE + c.TILE_SIZE // 2
-        target_pixel_y = self.target_grid_cell[1] * c.TILE_SIZE + c.TILE_SIZE // 2
+        target_px_x = self.target_grid_cell[0] * c.TILE_SIZE + c.TILE_SIZE // 2
+        target_px_y = self.target_grid_cell[1] * c.TILE_SIZE + c.TILE_SIZE // 2
 
         # Use min/max to make sure we land exactly on the center without overshooting:
-        if self.pos_x < target_pixel_x:
-            self.pos_x = min(self.pos_x + self.speed, target_pixel_x)
-        elif self.pos_x > target_pixel_x:
-            self.pos_x = max(self.pos_x - self.speed, target_pixel_x)
+        if self.px_pos_x < target_px_x:
+            self.px_pos_x = min(self.px_pos_x + self.speed, target_px_x)
+        elif self.px_pos_x > target_px_x:
+            self.px_pos_x = max(self.px_pos_x - self.speed, target_px_x)
         
-        if self.pos_y < target_pixel_y:
-            self.pos_y = min(self.pos_y + self.speed, target_pixel_y)
-        elif self.pos_y > target_pixel_y:
-            self.pos_y = max(self.pos_y - self.speed, target_pixel_y)
+        if self.px_pos_y < target_px_y:
+            self.px_pos_y = min(self.px_pos_y + self.speed, target_px_y)
+        elif self.px_pos_y > target_px_y:
+            self.px_pos_y = max(self.px_pos_y - self.speed, target_px_y)
 
         # Sync rects:
-        self.hitbox_rect.center = (int(self.pos_x), int(self.pos_y))
+        self.hitbox_rect.center = (int(self.px_pos_x), int(self.px_pos_y))
         self.rect.center = self.hitbox_rect.center
 
         # Update current cell if arrived:
-        if self.pos_x == target_pixel_x and self.pos_y == target_pixel_y:
+        if self.px_pos_x == target_px_x and self.px_pos_y == target_px_y:
             self.current_grid_cell = self.target_grid_cell
     
-    def follow_path(self, maze):
+    def follow_path(self, maze: Maze) -> None:
         """The Manager: Feed the next cell to the Legs."""
         # If path is empty, ask the Brain for new path:
         if not self.path:
@@ -96,23 +98,23 @@ class Scarecrow(pygame.sprite.Sprite):
         if self.path:
             self.target_grid_cell = self.path.pop(0)
     
-    def calculate_path(self, maze):
+    def calculate_path(self, maze: Maze) -> None:
         """The Brain: Calculate path to follow based on current state."""
 
         # Active chase, player in sight:
-        if self.state == ScarecrowState.CHASE and self.target_player_position:
+        if self.state == ScarecrowState.CHASE and self.target_player_grid_position:
             self.speed = c.SCARECROW_CHASE_SPEED
-            self.path = calculate_astar(maze.grid, self.current_grid_cell, self.target_player_position)
+            self.path = calculate_astar(maze.grid, self.current_grid_cell, self.target_player_grid_position)
         
         # Investigate new glow stick:
-        elif self.state == ScarecrowState.INVESTIGATE and self.target_glow_stick_position:
+        elif self.state == ScarecrowState.INVESTIGATE and self.target_glow_stick_grid_position:
             self.speed = c.SCARECROW_RUN_SPEED
-            self.path = calculate_astar(maze.grid, self.current_grid_cell, self.target_glow_stick_position)
+            self.path = calculate_astar(maze.grid, self.current_grid_cell, self.target_glow_stick_grid_position)
 
             # Go back to wandering after finding glow stick:
-            if self.current_grid_cell == self.target_glow_stick_position:
+            if self.current_grid_cell == self.target_glow_stick_grid_position:
                 self.state = ScarecrowState.WANDER
-                self.target_glow_stick_position = None # Clear memory
+                self.target_glow_stick_grid_position = None # Clear memory
         
         # Wandering:
         elif self.state == ScarecrowState.WANDER:
@@ -122,7 +124,7 @@ class Scarecrow(pygame.sprite.Sprite):
             if next_cell:
                 self.path.append(next_cell)
 
-    def calculate_wander_move(self, maze):
+    def calculate_wander_move(self, maze: Maze) -> Coordinate | None:
         current_grid_x, current_grid_y = self.current_grid_cell
         walls_bitmask = maze.grid[current_grid_y][current_grid_x]
 
@@ -147,7 +149,7 @@ class Scarecrow(pygame.sprite.Sprite):
         
         return None
 
-    def investigate_glow_stick(self, grid_position):
+    def investigate_glow_stick(self, grid_position: Coordinate) -> None:
         """Called by main.py when a glow stick is dropped."""
 
         # Ignore glow sticks if chasing the player:
@@ -155,10 +157,10 @@ class Scarecrow(pygame.sprite.Sprite):
             return
         
         self.state = ScarecrowState.INVESTIGATE
-        self.target_glow_stick_position = grid_position
+        self.target_glow_stick_grid_position = grid_position
         self.path.clear() # Stop whatever we're doing to go investigate.
     
-    def check_for_player(self, player, maze):
+    def check_for_player(self, player: Player, maze: Maze) -> None:
         # Proximity check ignoring walls:
         player_center_vector = pygame.math.Vector2(player.rect.center)
         scarecrow_center_vector = pygame.math.Vector2(self.rect.center)
@@ -174,12 +176,12 @@ class Scarecrow(pygame.sprite.Sprite):
             self.last_seen_player_time = pygame.time.get_ticks()
 
             if self.state != ScarecrowState.CHASE:
-                self.start_chase(player.current_grid_cell)
+                self.start_chase(player.current_grid_position)
 
-            elif self.target_player_position != player.current_grid_cell:
+            elif self.target_player_grid_position != player.current_grid_position:
                 # This means we're chasing, but player has moved to a new cell.
                 # So update the target and clear the path so A* recalculates.
-                self.target_player_position = player.current_grid_cell
+                self.target_player_grid_position = player.current_grid_position
                 self.path.clear()
 
         # Logic for when player is not seen, i.e., player turned a corner,
@@ -192,14 +194,14 @@ class Scarecrow(pygame.sprite.Sprite):
 
                 # Give up if it's been too long, or if we reached the spot where the player was:
                 if (time_since_seen > c.SCARECROW_MEMORY_LENGTH 
-                    or self.current_grid_cell == self.target_player_position):
+                    or self.current_grid_cell == self.target_player_grid_position):
                     
                     self.state = ScarecrowState.WANDER
-                    self.target_player_position = None
+                    self.target_player_grid_position = None
                     self.path.clear()
     
-    def has_line_of_sight(self, player, maze):
-        player_grid_x, player_grid_y = player.current_grid_cell
+    def has_line_of_sight(self, player: Player, maze: Maze) -> bool:
+        player_grid_x, player_grid_y = player.current_grid_position
         scarecrow_grid_x, scarecrow_grid_y = self.current_grid_cell
 
         # (Note: Don't have to account for if they share both column
@@ -230,9 +232,9 @@ class Scarecrow(pygame.sprite.Sprite):
         
         return False
     
-    def start_chase(self, player_grid_position):
+    def start_chase(self, player_grid_position: Coordinate) -> None:
         self.state = ScarecrowState.CHASE
-        self.target_player_position = player_grid_position
+        self.target_player_grid_position = player_grid_position
 
         # Instantly increase speed:
         self.speed = c.SCARECROW_CHASE_SPEED

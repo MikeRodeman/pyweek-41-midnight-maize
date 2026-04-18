@@ -6,7 +6,7 @@ import src.core.constants as c
 from src.entities.player import Player
 
 class Sidebar:
-    def __init__(self):
+    def __init__(self) -> None:
         # Start where the maze ends at the right.
         self.rect = pygame.Rect(c.MAZE_WIDTH, 0, c.SIDEBAR_WIDTH, c.LOGICAL_SCREEN_HEIGHT)
 
@@ -16,7 +16,7 @@ class Sidebar:
             # Fallback
             self.font = pygame.font.SysFont(None, 16)
     
-    def draw(self, surface, player, elapsed_ticks):
+    def draw(self, surface: pygame.Surface, player: Player, elapsed_ticks: int) -> None:
         # Draw background:
         pygame.draw.rect(surface, c.SIDEBAR_COLOR, self.rect)
 

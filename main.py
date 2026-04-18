@@ -12,7 +12,7 @@ from src.ui.menus import MenuManager
 from src.ui.sidebar import Sidebar
 
 class Game:
-    def __init__(self):
+    def __init__(self) -> None:
         pygame.init()
         self.screen = pygame.display.set_mode(
             (c.LOGICAL_SCREEN_WIDTH, c.LOGICAL_SCREEN_HEIGHT),
@@ -45,18 +45,18 @@ class Game:
         self.running = True
     
     @property
-    def state(self):
+    def state(self) -> c.GameState:
         """Always returns the current active state (top of stack)."""
         return self.state_stack[-1]
 
-    def change_state(self, new_state):
+    def change_state(self, new_state: c.GameState) -> None:
         self.state_stack.append(new_state)
 
-    def go_back(self):
+    def go_back(self) -> None:
         if len(self.state_stack) > 1:
             self.state_stack.pop()
     
-    def new_game(self, seed=None):
+    def new_game(self, seed: str = None) -> None:
         self.maze = Maze(seed)
         self.sidebar = Sidebar()
 
@@ -89,10 +89,10 @@ class Game:
         # Draw the maze on top of the surface:
         self.maze.draw(self.background_surface)
         
-    def handle_events(self):
+    def handle_events(self) -> None:
         self.event_handler.process_events()
     
-    def draw_screen(self):
+    def draw_screen(self) -> None:
         # Always draw the game world in the background (except start menu):
         if self.state != c.GameState.START_MENU:
             self.screen.blit(self.background_surface, (0, 0))
@@ -104,11 +104,19 @@ class Game:
 
             # Cut out a hole in the nightfall for the player.
             # Magenta acts as green in a green screen:
-            pygame.draw.circle(self.nightfall, (255, 0, 255), self.player.rect.center, c.PLAYER_LIGHT_RADIUS)
+            pygame.draw.circle(
+                            self.nightfall,
+                            (255, 0, 255),
+                            self.player.rect.center,
+                            c.PLAYER_LIGHT_RADIUS)
 
             # Also cut out holes in the nightfall for the glow sticks:
             for glow_stick_sprite in self.glow_stick_sprites:
-                pygame.draw.circle(self.nightfall, (255, 0, 255), glow_stick_sprite.rect.center, c.GLOW_STICK_LIGHT_RADIUS)
+                pygame.draw.circle(
+                            self.nightfall,
+                            (255, 0, 255),
+                            glow_stick_sprite.rect.center,
+                            c.GLOW_STICK_LIGHT_RADIUS)
 
             # Draw the nightfall over the maze:
             self.screen.blit(self.nightfall, (0, 0))
@@ -141,7 +149,7 @@ class Game:
 
         pygame.display.flip()
 
-    def update(self):
+    def update(self) -> None:
         # Calculate how much time has passed since last loop:
         current_ticks = pygame.time.get_ticks()
         delta_time = current_ticks - self.last_frame_ticks
@@ -165,7 +173,7 @@ class Game:
             if self.player.hitbox_rect.colliderect(self.lookout_tower.rect):
                 self.show_results(True)
     
-    def show_results(self, won):
+    def show_results(self, won: bool) -> None:
         # Calculate final stats:
         total_seconds = self.elapsed_ticks / 1000 # Seconds
         minutes = int(total_seconds / 60)
@@ -186,7 +194,7 @@ class Game:
         # can't "unpause" a finished game:
         self.state_stack = [c.GameState.RESULTS_SCREEN]
 
-    def run(self):
+    def run(self) -> None:
         while self.running:
             self.handle_events()
             self.update()

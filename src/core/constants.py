@@ -1,21 +1,34 @@
 from enum import Enum
 from pathlib import Path
+from typing import Final
 
-# Directory Paths:
-ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+from pygame.typing import ColorLike
 
-GRAPHICS_DIR = ROOT_DIR / "assets" / "graphics"
-FONTS_DIR = ROOT_DIR / "assets" / "fonts"
-DATA_DIR = ROOT_DIR / "assets" / "data"
+# --------------------------------------------------------------------------
+# PATHS
+# --------------------------------------------------------------------------
 
-CORE_DIR = ROOT_DIR / "src" / "core"
-ENTITIES_DIR = ROOT_DIR / "src" / "entities"
-UI_DIR = ROOT_DIR / "src" / "ui"
-UTILS_DIR = ROOT_DIR / "src" / "utils"
+ROOT_DIR: Final[Path] = Path(__file__).resolve().parent.parent.parent
 
-STORY_PATH = DATA_DIR / "story.txt"
-SMALL_FONT_PATH = FONTS_DIR / "m5x7.ttf"
-LARGE_FONT_PATH = FONTS_DIR / "m6x11.ttf"
+# Asset Folders:
+GRAPHICS_DIR: Final[Path] = ROOT_DIR / "assets" / "graphics"
+FONTS_DIR: Final[Path] = ROOT_DIR / "assets" / "fonts"
+DATA_DIR: Final[Path] = ROOT_DIR / "assets" / "data"
+
+# Source Folders:
+CORE_DIR: Final[Path] = ROOT_DIR / "src" / "core"
+ENTITIES_DIR: Final[Path] = ROOT_DIR / "src" / "entities"
+UI_DIR: Final[Path] = ROOT_DIR / "src" / "ui"
+UTILS_DIR: Final[Path] = ROOT_DIR / "src" / "utils"
+
+# Specific Files:
+STORY_PATH: Final[Path] = DATA_DIR / "story.txt"
+SMALL_FONT_PATH: Final[Path] = FONTS_DIR / "m5x7.ttf"
+LARGE_FONT_PATH: Final[Path] = FONTS_DIR / "m6x11.ttf"
+
+# --------------------------------------------------------------------------
+# GAME STATES
+# --------------------------------------------------------------------------
 
 class GameState(Enum):
     START_MENU = 0
@@ -27,54 +40,84 @@ class GameState(Enum):
     CURRENT_SEED_SCREEN = 6
     RESULTS_SCREEN = 7
 
-# Grid size is a prime number to
-# ensure the starting window size
-# doesn't clip the edge of the screen:
-GRID_SIZE = 19 # A 19x19 grid.
-TILE_SIZE = 16
+# --------------------------------------------------------------------------
+# GRID AND DISPLAY SETTINGS
+# --------------------------------------------------------------------------
 
-MAZE_HEIGHT = GRID_SIZE * TILE_SIZE
-MAZE_WIDTH = GRID_SIZE * TILE_SIZE
-SIDEBAR_WIDTH = 7 * TILE_SIZE
+FPS: Final[int] = 60
 
-LOGICAL_SCREEN_WIDTH = MAZE_WIDTH + SIDEBAR_WIDTH
-LOGICAL_SCREEN_HEIGHT = MAZE_HEIGHT
+GRID_SIZE: Final[int] = 19 # Prime number to prevent clipping on edge of screen
+TILE_SIZE: Final[int] = 16
 
-FPS = 60
+MAZE_HEIGHT: Final[int] = GRID_SIZE * TILE_SIZE
+MAZE_WIDTH: Final[int] = GRID_SIZE * TILE_SIZE
+SIDEBAR_WIDTH: Final[int] = 7 * TILE_SIZE
 
-# Colors:
-BLACK = (0, 0, 0)
-WHITE = (255, 255, 255)
-SIDEBAR_COLOR = (30, 30, 30)
-CORN_WALL_COLOR = (180, 160, 50)
+LOGICAL_SCREEN_WIDTH: Final[int] = MAZE_WIDTH + SIDEBAR_WIDTH
+LOGICAL_SCREEN_HEIGHT: Final[int] = MAZE_HEIGHT
+
+# --------------------------------------------------------------------------
+# MAZE LOGIC
+# --------------------------------------------------------------------------
 
 # Bitmask constants for walls. Similar to Linux file permissions.
-N = 1  # 0001 (North/Top)
-S = 2  # 0010 (South/Bottom)
-W = 4  # 0100 (West/Left)
-E = 8  # 1000 (East/Right)
+N: Final[int] = 1  # 0001 (North/Top)
+S: Final[int] = 2  # 0010 (South/Bottom)
+W: Final[int] = 4  # 0100 (West/Left)
+E: Final[int] = 8  # 1000 (East/Right)
 
-# Speed settings:
-PLAYER_SPEED = 1.2
-PLAYER_RUN_SPEED = 2.4
+# --------------------------------------------------------------------------
+# PLAYER SETTINGS
+# --------------------------------------------------------------------------
 
-MAX_STAMINA = 100
-STAMINA_DECAY = 0.5
-STAMINA_REGEN = 0.25
+# Speed:
+PLAYER_SPEED: Final[float] = 1.2
+PLAYER_RUN_SPEED: Final[float] = 2.4
 
-SCARECROW_SPEED = 0.6
-SCARECROW_RUN_SPEED = 1.6
-SCARECROW_CHASE_SPEED = 2.0
+# Stamina:
+MAX_STAMINA: Final[float] = 100.0
+STAMINA_DECAY: Final[float] = 0.5
+STAMINA_REGEN: Final[float] = 0.25
 
-SCARECROW_DETECTION_RADIUS = 2 * TILE_SIZE
-SCARECROW_MEMORY_LENGTH = 3000 # milliseconds
+# Glowsticks:
+INITIAL_GLOW_STICKS: Final[int] = 10
+GRACE_GLOW_STICKS_AMOUNT: Final[int] = 5
 
-INITIAL_GLOW_STICKS = 10
+# --------------------------------------------------------------------------
+# SCARECROW SETTINGS
+# --------------------------------------------------------------------------
 
-GRACE_PERIOD = 15
-GRACE_GLOW_STICKS_AMOUNT = 5
+# Speed:
+SCARECROW_SPEED: Final[float] = 0.6
+SCARECROW_RUN_SPEED: Final[float] = 1.6
+SCARECROW_CHASE_SPEED: Final[float] = 2.0
 
-STORY_PAGES = [
+# Detection Logic:
+SCARECROW_DETECTION_RADIUS: Final[float] = 2.0 * TILE_SIZE
+SCARECROW_MEMORY_LENGTH: Final[int] = 3000 # milliseconds
+
+# Time until chase starts:
+GRACE_PERIOD: Final[int] = 15 # seconds
+
+# --------------------------------------------------------------------------
+# VISUALS AND LIGHTING
+# --------------------------------------------------------------------------
+
+# Colors:
+BLACK: Final[ColorLike] = (0, 0, 0)
+WHITE: Final[ColorLike] = (255, 255, 255)
+SIDEBAR_COLOR: Final[ColorLike] = (30, 30, 30)
+CORN_WALL_COLOR: Final[ColorLike] = (180, 160, 50)
+
+# Light Radii:
+PLAYER_LIGHT_RADIUS: Final[float] = TILE_SIZE * 4.0
+GLOW_STICK_LIGHT_RADIUS: Final[float] = TILE_SIZE * 3.0
+
+# --------------------------------------------------------------------------
+# STATIC TEXT DATA
+# --------------------------------------------------------------------------
+
+STORY_PAGES: Final[list[str]] = [
     "You were making record time at the Miller Farm's annual corn maze contest, when all of a sudden you tripped over a rogue pumpkin, and the world went to black.",
     "When you awaken, you are greeted by nightfall. Not only is it pitch black, you soon realize the map you made is useless as you keep stumbling into corn stalks.",
     "The wind suddenly stops, and an eerie sound whistles through the dry husks. A pit develops in your stomach, and you understand now that the legend is true.",
@@ -83,6 +126,3 @@ STORY_PAGES = [
     "It dawns on you, your backpack is full of industrial-grade, white, neon glow sticks. They are very bright, but they also attract unwanted attention.",
     "Cautiously using your glow sticks to help guide you, avoid the paranormal sentinel, and find your way to the lookout tower in the Midnight Maize."
     ]
-
-PLAYER_LIGHT_RADIUS = TILE_SIZE * 4
-GLOW_STICK_LIGHT_RADIUS = TILE_SIZE * 3

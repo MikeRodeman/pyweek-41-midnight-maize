@@ -2,10 +2,11 @@ import pygame
 
 import src.core.constants as c
 from src.core.maze import Maze
+from src.core.custom_types import Coordinate
 from src.entities.glow_stick import GlowStick
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, starting_position):
+    def __init__(self, starting_grid_position: Coordinate) -> None:
         # Call parent constructor:
         super().__init__()
 
@@ -16,11 +17,11 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
 
         # Set grid location:
-        self.current_grid_cell = starting_position
+        self.current_grid_position = starting_grid_position
 
         # Set starting position:
-        self.pos_x = starting_position[0] * c.TILE_SIZE + c.TILE_SIZE // 2
-        self.pos_y = starting_position[1] * c.TILE_SIZE + c.TILE_SIZE // 2
+        self.pos_x = starting_grid_position[0] * c.TILE_SIZE + c.TILE_SIZE // 2
+        self.pos_y = starting_grid_position[1] * c.TILE_SIZE + c.TILE_SIZE // 2
 
         # Make Rect for the hitbox, smaller than the visual rect
         # so the sprite can fit between the walls of the maze:
@@ -37,7 +38,7 @@ class Player(pygame.sprite.Sprite):
         self.glow_sticks_left = c.INITIAL_GLOW_STICKS
         self.glow_sticks_used = 0
 
-    def update(self, maze):
+    def update(self, maze: Maze) -> None:
         keys = pygame.key.get_pressed()
 
         if self.stamina <= 0:
@@ -59,14 +60,14 @@ class Player(pygame.sprite.Sprite):
             self.speed = c.PLAYER_SPEED
             self.stamina = min(c.MAX_STAMINA, self.stamina + c.STAMINA_REGEN)
         
-        dx, dy = 0, 0
+        dx, dy = 0.0, 0.0
 
         if keys[pygame.K_UP] or keys[pygame.K_w]: dy -= self.speed
         if keys[pygame.K_DOWN] or keys[pygame.K_s]: dy += self.speed
         if keys[pygame.K_LEFT] or keys[pygame.K_a]: dx -= self.speed
         if keys[pygame.K_RIGHT] or keys[pygame.K_d]: dx += self.speed
 
-        self.current_grid_cell = (int(self.pos_x // c.TILE_SIZE), int(self.pos_y // c.TILE_SIZE))
+        self.current_grid_position = (int(self.pos_x // c.TILE_SIZE), int(self.pos_y // c.TILE_SIZE))
 
         # Horizontal movement and collision:
         self.pos_x += dx
@@ -81,12 +82,12 @@ class Player(pygame.sprite.Sprite):
         # Line up center of the visual rect with the center of the hitbox rect:
         self.rect.center = self.hitbox_rect.center
     
-    def handle_collision(self, maze, axis, delta):
+    def handle_collision(self, maze: Maze, axis: str, delta: float) -> None:
         # Instead of checking all walls, check just the walls
         # in the current cell and the 8 neighboring cells:
-        wall_rects_to_check = []
+        wall_rects_to_check: list[pygame.Rect] = []
 
-        grid_x, grid_y = self.current_grid_cell
+        grid_x, grid_y = self.current_grid_position
 
         for i in range(-1, 2):
             for j in range(-1, 2):
@@ -113,7 +114,7 @@ class Player(pygame.sprite.Sprite):
                     elif delta < 0: self.hitbox_rect.top = wall_rect.bottom
                     self.pos_y = self.hitbox_rect.centery
 
-    def drop_glow_stick(self):
+    def drop_glow_stick(self) -> GlowStick | None:
         """Create a glow stick at the player's current center if any are left."""
         if self.glow_sticks_left > 0:
             self.glow_sticks_left -= 1

@@ -1,18 +1,19 @@
-import collections
+from collections import defaultdict, deque
 import random
 
 import pygame
 
 import src.core.constants as c
+from src.core.custom_types import Coordinate
 
 class Maze:
-    def __init__(self, seed=None):
+    def __init__(self, seed: str | None = None) -> None:
         # The maze is described with a 2D list of integers between 0 and 15.
         # The integers represent the walls of each cell in the grid, like
         # how Linux file permission numbers work. It's called a 4-bit bitmask.
         #
         # 1 (0001) = North, 2 (0010) = East, 4 (0100) = South, 8 (1000) = West.
-        self.grid = [[15 for _ in range(c.GRID_SIZE)] for _ in range(c.GRID_SIZE)]
+        self.grid: list[list[int]] = [[15 for _ in range(c.GRID_SIZE)] for _ in range(c.GRID_SIZE)]
 
         # If no player doesn't give a seed, generate a random one:
         if not seed:
@@ -20,10 +21,10 @@ class Maze:
         else:
             self.seed = str(seed)
 
-        self.rng = random.Random(self.seed)
+        self.rng: random.Random = random.Random(self.seed)
 
         # The bit values for the directions, with their dx and dy:
-        self.directions = [(c.N, 0, -1), (c.S, 0, 1), (c.W, -1, 0), (c.E, 1, 0)]
+        self.directions = ((c.N, 0, -1), (c.S, 0, 1), (c.W, -1, 0), (c.E, 1, 0))
 
         # When we knock a wall down in a cell to carve a path to another cell,
         # we also need to knock the wall down in that other cell:
@@ -33,7 +34,7 @@ class Maze:
         self.find_starting_positions()
         self.create_wall_rects()
     
-    def generate(self):
+    def generate(self) -> None:
         # Pick random starting point for the generation:
         start_x = self.rng.randint(0, c.GRID_SIZE - 1)
         start_y = self.rng.randint(0, c.GRID_SIZE - 1)
@@ -85,7 +86,7 @@ class Maze:
                 # Pick up our yarn and backtrack:
                 stack.pop()
     
-    def find_starting_positions(self):
+    def find_starting_positions(self) -> None:
         # The player starts somewhere completely random:
         player_x = self.rng.randint(0, c.GRID_SIZE - 1)
         player_y = self.rng.randint(0, c.GRID_SIZE - 1)
@@ -96,7 +97,7 @@ class Maze:
 
         # Keep track of the cells we need to check with their distances
         # from the player:
-        queue = collections.deque([(self.player_starting_position, 0)])
+        queue = deque([(self.player_starting_position, 0)])
 
         # Keep track of the cells we've visited already:
         visited = {self.player_starting_position}
@@ -169,9 +170,9 @@ class Maze:
         else:
             self.scarecrow_starting_position = furthest_cell_from_player
     
-    def create_wall_rects(self):
+    def create_wall_rects(self) -> None:
         # Make dictionary to track the wall rects each grid cell has:
-        self.wall_rects = collections.defaultdict(list)
+        self.wall_rects: defaultdict[Coordinate, list[pygame.Rect]] = defaultdict(list)
         thickness = 4
 
         # Make 4 large rects for the borders:
@@ -202,11 +203,19 @@ class Maze:
                 # We only need to check the South and East walls for each cell, because the
                 # North and West walls will be the South and West walls for a neighboring cell:
                 if walls_bitmask & c.S:
-                    self.wall_rects[(x, y)].append(pygame.Rect(left_x, top_y + c.TILE_SIZE - thickness // 2, c.TILE_SIZE, thickness))
+                    self.wall_rects[(x, y)].append(pygame.Rect(
+                                                    left_x,
+                                                    top_y + c.TILE_SIZE - thickness // 2,
+                                                    c.TILE_SIZE,
+                                                    thickness))
                 if walls_bitmask & c.E:
-                    self.wall_rects[(x, y)].append(pygame.Rect(left_x + c.TILE_SIZE - thickness // 2, top_y, thickness, c.TILE_SIZE))
+                    self.wall_rects[(x, y)].append(pygame.Rect(
+                                                    left_x + c.TILE_SIZE - thickness // 2,
+                                                    top_y,
+                                                    thickness,
+                                                    c.TILE_SIZE))
 
-    def draw(self, surface):
+    def draw(self, surface: pygame.Surface) -> None:
         for y in range(c.GRID_SIZE):
             for x in range(c.GRID_SIZE):
                 # Get the wall bitmask for the current cell:

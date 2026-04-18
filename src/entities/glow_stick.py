@@ -1,9 +1,10 @@
 import pygame
 
 import src.core.constants as c
+from src.core.custom_types import Coordinate
 
 class GlowStick(pygame.sprite.Sprite):
-    def __init__(self, pixel_position):
+    def __init__(self, pixel_position: Coordinate) -> None:
         super().__init__()
 
         # Pixel art:
